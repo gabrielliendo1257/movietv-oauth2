@@ -45,97 +45,95 @@ import lombok.extern.slf4j.Slf4j;
 @EnableMethodSecurity(prePostEnabled = true, securedEnabled = true)
 public class SecurityConfig {
 
-    @Value(value = "${api.path.base}")
-    private String apiPathBase;
+  @Value(value = "${api.path.base}")
+  private String apiPathBase;
 
-    @Bean
-    @Order(value = 2)
-    SecurityFilterChain configuration(HttpSecurity http)
-            throws Exception {
-        return http
-                .csrf(CsrfConfigurer::disable)
-                .httpBasic(HttpBasicConfigurer::disable)
-                .oauth2ResourceServer((resourceServer) -> resourceServer
-                        .jwt(jwtConfig -> jwtConfig
-                                .jwkSetUri("http://localhost:8080/oauth2/jwks")))
-                .authorizeHttpRequests(authorize -> authorize
-                    .requestMatchers(HttpMethod.GET, this.apiPathBase + "/hello").permitAll()
-                    // .requestMatchers(HttpMethod.POST, this.apiPathBase + "/save").hasAnyRole(Roles.STANDARD_USER.name())
-                    // authorize.requestMatchers("/api/v1/movie/post_content").hasAnyRole(Roles.GUEST_USER.name());
-                    .anyRequest().authenticated()
-                )
-                .formLogin(Customizer.withDefaults())
-                .build();
-    }
+  @Bean
+  @Order(value = 2)
+  SecurityFilterChain configuration(HttpSecurity http)
+      throws Exception {
+    return http
+        .csrf(CsrfConfigurer::disable)
+        .httpBasic(HttpBasicConfigurer::disable)
+        .oauth2ResourceServer((resourceServer) -> resourceServer
+            .jwt(jwtConfig -> jwtConfig
+                .jwkSetUri("http://localhost:8080/oauth2/jwks")))
+        .authorizeHttpRequests(authorize -> authorize
+            .requestMatchers(HttpMethod.GET, this.apiPathBase + "/hello").permitAll()
+            .requestMatchers(HttpMethod.GET, this.apiPathBase + "/all").permitAll()
+            .anyRequest().authenticated())
+        .formLogin(Customizer.withDefaults())
+        .build();
+  }
 
-    @Bean
-    AuthenticationManager authenticationProvider(PasswordEncoder passwordEncoder,
-            UserDetailsService userDetailsService) {
-        DaoAuthenticationProvider daoAuthenticationProvider = new DaoAuthenticationProvider();
-        daoAuthenticationProvider.setPasswordEncoder(passwordEncoder);
-        daoAuthenticationProvider.setUserDetailsService(userDetailsService);
+  @Bean
+  AuthenticationManager authenticationProvider(PasswordEncoder passwordEncoder,
+      UserDetailsService userDetailsService) {
+    DaoAuthenticationProvider daoAuthenticationProvider = new DaoAuthenticationProvider();
+    daoAuthenticationProvider.setPasswordEncoder(passwordEncoder);
+    daoAuthenticationProvider.setUserDetailsService(userDetailsService);
 
-        return new ProviderManager(daoAuthenticationProvider);
-    }
+    return new ProviderManager(daoAuthenticationProvider);
+  }
 
-    @Bean
-    OAuth2TokenCustomizer<JwtEncodingContext> tokenCustomizer(
-            @Value(value = "${spring.application.name}") String applicationName) {
-        return (context) -> {
-            var authenticatio = context.getPrincipal();
+  @Bean
+  OAuth2TokenCustomizer<JwtEncodingContext> tokenCustomizer(
+      @Value(value = "${spring.application.name}") String applicationName) {
+    return (context) -> {
+      var authenticatio = context.getPrincipal();
 
-            if (authenticatio instanceof UsernamePasswordAuthenticationToken authenticationToken) {
-                if (context.getTokenType() == OAuth2TokenType.ACCESS_TOKEN) {
-                    List<String> roles = authenticationToken.getAuthorities().stream()
-                            .map(GrantedAuthority::getAuthority)
-                            .toList();
+      if (authenticatio instanceof UsernamePasswordAuthenticationToken authenticationToken) {
+        if (context.getTokenType() == OAuth2TokenType.ACCESS_TOKEN) {
+          List<String> roles = authenticationToken.getAuthorities().stream()
+              .map(GrantedAuthority::getAuthority)
+              .toList();
 
-                    context.getClaims().audience(List.of(applicationName));
-                    context.getClaims().subject(authenticationToken.getName());
-                    context.getClaims().claim("roles", roles);
-                }
-            }
-        };
-    }
+          context.getClaims().audience(List.of(applicationName));
+          context.getClaims().subject(authenticationToken.getName());
+          context.getClaims().claim("roles", roles);
+        }
+      }
+    };
+  }
 
-    @Bean
-    JwtAuthenticationConverter authenticationConverter() {
-        var jwtConverter = new JwtGrantedAuthoritiesConverter();
-        jwtConverter.setAuthorityPrefix("ROLE_");
-        jwtConverter.setAuthoritiesClaimName("roles");
+  @Bean
+  JwtAuthenticationConverter authenticationConverter() {
+    var jwtConverter = new JwtGrantedAuthoritiesConverter();
+    jwtConverter.setAuthorityPrefix("");
+    jwtConverter.setAuthoritiesClaimName("roles");
 
-        var jwtAuthConverter = new JwtAuthenticationConverter();
-        jwtAuthConverter.setJwtGrantedAuthoritiesConverter(jwtConverter);
+    var jwtAuthConverter = new JwtAuthenticationConverter();
+    jwtAuthConverter.setJwtGrantedAuthoritiesConverter(jwtConverter);
 
-        return jwtAuthConverter;
-    }
+    return jwtAuthConverter;
+  }
 
-    @Bean
-    @Profile(value = { "test", "dev" })
-    UserDetailsService userDetailService(Accountrepository accountrepository, AccountMapper accountMapper) {
-        return (username) -> {
-            AccountJpaEntity accountEntity = accountrepository.findByUsername(username)
-                    .orElseThrow(() -> new UsernameNotFoundException("Ususario no encontrado."));
-            SecurityAccount securityAccount = accountMapper.toSecurityAccount(accountEntity);
-            log.info("SecurityAccount after mapper: {}", securityAccount);
+  @Bean
+  @Profile(value = { "test", "dev" })
+  UserDetailsService userDetailService(Accountrepository accountrepository, AccountMapper accountMapper) {
+    return (username) -> {
+      AccountJpaEntity accountEntity = accountrepository.findByUsername(username)
+          .orElseThrow(() -> new UsernameNotFoundException("Ususario no encontrado."));
+      SecurityAccount securityAccount = accountMapper.toSecurityAccount(accountEntity);
+      log.info("SecurityAccount after mapper: {}", securityAccount);
 
-            return securityAccount;
-        };
-    }
+      return securityAccount;
+    };
+  }
 
-    @Bean
-    @Profile(value = { "test" })
-    UserDetailsService userDetailServiceDev(PasswordEncoder passwordEncoder) {
-        SecurityAccount securityAccount = new SecurityAccount("adminusername", passwordEncoder.encode("adminpassword"),
-                Roles.ADMIN);
+  @Bean
+  @Profile(value = { "test" })
+  UserDetailsService userDetailServiceDev(PasswordEncoder passwordEncoder) {
+    SecurityAccount securityAccount = new SecurityAccount("adminusername", passwordEncoder.encode("adminpassword"),
+        Roles.ADMIN);
 
-        return new InMemoryUserDetailsManager(securityAccount);
-    }
+    return new InMemoryUserDetailsManager(securityAccount);
+  }
 
-    @Bean
-    @Profile(value = { "test", "dev" })
-    PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
+  @Bean
+  @Profile(value = { "test", "dev" })
+  PasswordEncoder passwordEncoder() {
+    return new BCryptPasswordEncoder();
+  }
 
 }

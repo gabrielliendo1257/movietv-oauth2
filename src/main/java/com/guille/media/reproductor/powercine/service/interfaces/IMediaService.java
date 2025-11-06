@@ -7,11 +7,13 @@ import com.guille.media.reproductor.powercine.models.MediaJpaEntity;
 
 public interface IMediaService {
 
-    Optional<MediaJpaEntity> findByTitle(String title);
+  Optional<MediaJpaEntity> findByTitle(String title);
 
-    Optional<MediaJpaEntity> findByid(Integer id);
+  Optional<MediaJpaEntity> findByid(Integer id);
 
-    List<MediaJpaEntity> findByLikeTitle(String likeTitle);
+  List<MediaJpaEntity> findByLikeTitle(String likeTitle);
 
-    MediaJpaEntity save(MediaJpaEntity entity);
+  MediaJpaEntity save(MediaJpaEntity entity);
+
+  List<MediaJpaEntity> findAllMedias();
 }

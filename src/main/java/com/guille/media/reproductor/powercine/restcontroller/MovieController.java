@@ -1,5 +1,7 @@
 package com.guille.media.reproductor.powercine.restcontroller;
 
+import java.util.List;
+
 import com.guille.media.reproductor.powercine.dto.request.MediaDto;
 import com.guille.media.reproductor.powercine.mapper.MediaMapper;
 import com.guille.media.reproductor.powercine.models.MediaJpaEntity;
@@ -22,35 +24,36 @@ import lombok.extern.slf4j.Slf4j;
 @RequestMapping(value = "${api.path.base}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
 public class MovieController {
 
-    private final IMediaService mediaService;
-    private final MediaMapper mediaMapper;
+  private final IMediaService mediaService;
+  private final MediaMapper mediaMapper;
 
-    public MovieController(IMediaService mediaService, MediaMapper mediaMapper) {
-        this.mediaService = mediaService;
-        this.mediaMapper = mediaMapper;
-    }
+  public MovieController(IMediaService mediaService, MediaMapper mediaMapper) {
+    this.mediaService = mediaService;
+    this.mediaMapper = mediaMapper;
+  }
 
-    @GetMapping(value = "/hello")
-    public ResponseEntity<?> hello() {
-        return new ResponseEntity<String>("Hello STANDARD_CONTENT.", HttpStatus.OK);
-    }
+  @GetMapping(value = "/hello")
+  public ResponseEntity<?> hello() {
+    return new ResponseEntity<String>("Hello STANDARD_CONTENT.", HttpStatus.OK);
+  }
 
-    @Secured("hasRole('ADMIN')")
-    @GetMapping(value = "/content")
-    public ResponseEntity<?> content() {
-        return new ResponseEntity<String>("Hello admin.", HttpStatus.OK);
-    }
+  @Secured("ROLE_ADMIN")
+  @GetMapping(value = "/content")
+  public ResponseEntity<?> content() {
+    return new ResponseEntity<String>("Hello admin.", HttpStatus.OK);
+  }
 
-    @PostMapping(value = "/post_content")
-    public String posted() {
-        return "Content posted succesfully";
-    }
+  @GetMapping(value = "/all")
+  public ResponseEntity<?> getAllMovies() {
+    List<MediaJpaEntity> medias = this.mediaService.findAllMedias();
+    return medias.isEmpty() ? ResponseEntity.noContent().build() : ResponseEntity.ok(medias);
+  }
 
-    @PostMapping(value = "/save")
-    public ResponseEntity<?> processPersitMovie(@RequestBody MediaDto mediaDto) {
-        MediaJpaEntity entity = this.mediaMapper.toEntity(mediaDto);
+  @PostMapping(value = "/save")
+  public ResponseEntity<?> processPersitMovie(@RequestBody MediaDto mediaDto) {
+    MediaJpaEntity entity = this.mediaMapper.toEntity(mediaDto);
 
-        return ResponseEntity.ok(this.mediaService.save(entity));
-    }
+    return ResponseEntity.ok(this.mediaService.save(entity));
+  }
 
 }
