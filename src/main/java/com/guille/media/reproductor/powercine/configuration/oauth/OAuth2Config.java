@@ -4,9 +4,9 @@ import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
+import java.time.Duration;
 import java.util.UUID;
 
-import com.guille.media.reproductor.powercine.utils.enums.Roles;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
@@ -18,8 +18,10 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
+import org.springframework.http.MediaType;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
@@ -31,15 +33,13 @@ import org.springframework.security.oauth2.server.authorization.client.Registere
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2AuthorizationServerConfigurer;
 import org.springframework.security.oauth2.server.authorization.settings.ClientSettings;
+import org.springframework.security.oauth2.server.authorization.settings.TokenSettings;
 import org.springframework.security.web.SecurityFilterChain;
-
-import lombok.AllArgsConstructor;
+import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
+import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher;
 
 @Configuration
-@AllArgsConstructor
 public class OAuth2Config {
-
-    private final PasswordEncoder passwordEncoder;
 
     @Bean
     @Order(value = Ordered.HIGHEST_PRECEDENCE)
@@ -49,10 +49,11 @@ public class OAuth2Config {
 
         return http
                 .securityMatcher(oAuthorizationServerConfigurer.getEndpointsMatcher())
+                .exceptionHandling(exceptionConfig -> exceptionConfig
+                        .defaultAuthenticationEntryPointFor(new LoginUrlAuthenticationEntryPoint("/login"),
+                                new MediaTypeRequestMatcher(MediaType.TEXT_HTML)))
                 .with(oAuthorizationServerConfigurer, (authorizationServer) -> authorizationServer
                         .oidc(Customizer.withDefaults()))
-                .oauth2ResourceServer((resourceServer) -> resourceServer
-                        .jwt(Customizer.withDefaults()))
                 .authorizeHttpRequests((authorizeConfig) -> authorizeConfig
                         .anyRequest().authenticated())
                 .build();
@@ -60,27 +61,30 @@ public class OAuth2Config {
 
     @Bean
     @Profile(value = "dev")
-    public RegisteredClientRepository registeredClientRepository() {
+    RegisteredClientRepository registeredClientRepository(PasswordEncoder passwordEncoder) {
         var registeredClient = RegisteredClient.withId(UUID.randomUUID().toString())
-                .clientId("clientId")
-                .clientSecret(this.passwordEncoder.encode("secret"))
-                .scopes((set) -> Roles.STANDARD_USER.getPermissions().stream()
-                        .map((perm) -> set.add(perm.name())))
+                .clientId("app-movie")
+                .clientSecret(passwordEncoder.encode("super-secret"))
                 .scope(OidcScopes.PROFILE)
                 .scope(OidcScopes.OPENID)
                 .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
                 .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
                 .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
-                .redirectUri("http://localhost:9090/login/oauth2/movietv")
+                .redirectUri("http://127.0.0.1:9090/login/oauth2/movietv")
                 .postLogoutRedirectUri("http://localhost:9090/")
-                .clientSettings(ClientSettings.builder().requireAuthorizationConsent(true).build())
+                .tokenSettings(TokenSettings.builder()
+                        .reuseRefreshTokens(false)
+                        .accessTokenTimeToLive(Duration.ofMinutes(7))
+                        .refreshTokenTimeToLive(Duration.ofDays(5))
+                        .build())
+                .clientSettings(ClientSettings.builder().requireAuthorizationConsent(false).build())
                 .build();
 
         return new InMemoryRegisteredClientRepository(registeredClient);
     }
 
     @Bean
-    public JWKSource<SecurityContext> jwkSource() {
+    JWKSource<SecurityContext> jwkSource() {
         KeyPair keyPair = generateRsaKey();
         RSAPublicKey rsaPublicKey = (RSAPublicKey) keyPair.getPublic();
         RSAPrivateKey rsaPrivateKey = (RSAPrivateKey) keyPair.getPrivate();
@@ -95,8 +99,13 @@ public class OAuth2Config {
     }
 
     @Bean
-    public JwtDecoder jwtDecoder(JWKSource<SecurityContext> jwkSource) {
+    JwtDecoder jwtDecoder(JWKSource<SecurityContext> jwkSource) {
         return OAuth2AuthorizationServerConfiguration.jwtDecoder(jwkSource);
+    }
+
+    @Bean
+    WebSecurityCustomizer webSecurityCustomizer() {
+        return (web) -> web.ignoring().requestMatchers("/h2-console/**");
     }
 
     private static KeyPair generateRsaKey() {

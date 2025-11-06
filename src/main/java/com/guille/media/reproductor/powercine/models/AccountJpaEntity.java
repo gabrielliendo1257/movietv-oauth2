@@ -1,0 +1,72 @@
+package com.guille.media.reproductor.powercine.models;
+
+import java.time.LocalDateTime;
+import java.util.Objects;
+
+import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+
+import com.guille.media.reproductor.powercine.models.listeners.BaseJpaEntity;
+import com.guille.media.reproductor.powercine.utils.enums.Roles;
+
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@Table(name = "accounts")
+@Entity
+@Builder
+@EntityListeners(value = AuditingEntityListener.class)
+@NoArgsConstructor
+@AllArgsConstructor
+public class AccountJpaEntity extends BaseJpaEntity {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Integer id;
+    private String username;
+    private String password;
+    private String email;
+
+    @CreatedDate
+    private LocalDateTime createdAt;
+
+    @LastModifiedDate
+    private LocalDateTime updatedAt;
+
+    @Enumerated(value = EnumType.STRING)
+    private Roles rol;
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, username, createdAt);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        AccountJpaEntity other = (AccountJpaEntity) obj;
+        return Objects.equals(id, other.id) && Objects.equals(username, other.username)
+                && Objects.equals(createdAt, other.createdAt);
+    }
+}

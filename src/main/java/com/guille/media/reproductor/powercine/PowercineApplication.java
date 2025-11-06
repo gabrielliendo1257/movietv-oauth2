@@ -1,34 +1,31 @@
 package com.guille.media.reproductor.powercine;
 
-import java.io.IOException;
+import com.guille.media.reproductor.powercine.models.AccountJpaEntity;
+import com.guille.media.reproductor.powercine.repository.Accountrepository;
+import com.guille.media.reproductor.powercine.utils.enums.Roles;
 
-import com.guille.media.reproductor.powercine.movies.bootstrap.BeanMapperMovies;
-
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 @SpringBootApplication
 public class PowercineApplication {
-
-    @Autowired
-    private BeanMapperMovies beanMapperMovies;
 
     public static void main(String[] args) {
         SpringApplication.run(PowercineApplication.class, args);
     }
 
     @Bean
-    public ApplicationRunner persistMovies() {
+    ApplicationRunner persistMovies(Accountrepository accountrepository, PasswordEncoder passwordEncoder) {
         return args -> {
-            try {
-                this.beanMapperMovies.saveMovies();
-            } catch (IOException e) {
-                System.err.println("ERROR: No se pudo persistir.");
-                e.printStackTrace();
-            }
+            AccountJpaEntity adminEntity = new AccountJpaEntity(null, "adminusername", passwordEncoder.encode("adminpassword"), "admin@gmail.com",
+                    null, null, Roles.ADMIN);
+            AccountJpaEntity standardEntity = new AccountJpaEntity(null, "piterusername", passwordEncoder.encode("piterpassword"), "piter@gmail.com", null, null, Roles.STANDARD_USER);
+
+            accountrepository.save(standardEntity);
+            accountrepository.save(adminEntity);
         };
     }
 

@@ -4,7 +4,7 @@ import java.util.List;
 
 public enum Roles {
     ADMIN(List.of(Permissions.ADMININTRATOR, Permissions.SUPER_USER, Permissions.LIST_BUILDER,
-            Permissions.PREMIUM_CONTENT,
+            Permissions.PREMIUM_CONTENT, Permissions.STANDARD_CONTENT, Permissions.CONTENT_DIRECTOR,
             Permissions.PLATFORM_MANAGER)),
     PREMIUM_USER(List.of(Permissions.LIST_BUILDER, Permissions.PREMIUM_CONTENT, Permissions.GUEST,
             Permissions.STANDARD_CONTENT)),

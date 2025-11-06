@@ -2,15 +2,15 @@ package com.guille.media.reproductor.powercine.repository;
 
 import java.util.Optional;
 
-import com.guille.media.reproductor.powercine.models.Account;
+import com.guille.media.reproductor.powercine.models.AccountJpaEntity;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface Accountrepository extends JpaRepository<Account, Integer> {
+public interface Accountrepository extends JpaRepository<AccountJpaEntity, Integer> {
 
-    Optional<Account> findByUsername(String username);
+    Optional<AccountJpaEntity> findByUsername(String username);
 
-    Optional<Account> findByEmail(String email);
+    Optional<AccountJpaEntity> findByEmail(String email);
 }
