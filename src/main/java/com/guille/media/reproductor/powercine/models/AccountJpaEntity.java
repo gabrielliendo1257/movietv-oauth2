@@ -3,14 +3,7 @@ package com.guille.media.reproductor.powercine.models;
 import java.time.LocalDateTime;
 import java.util.Objects;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.EntityListeners;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 
 import com.guille.media.reproductor.powercine.models.listeners.BaseJpaEntity;
 import com.guille.media.reproductor.powercine.utils.enums.Roles;
@@ -36,8 +29,14 @@ public class AccountJpaEntity extends BaseJpaEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
+
+    @Column(unique = true, nullable = false, length = 20)
     private String username;
+
+    @Column(nullable = false, length = 300)
     private String password;
+
+    @Column(length = 100)
     private String email;
 
     @CreatedDate

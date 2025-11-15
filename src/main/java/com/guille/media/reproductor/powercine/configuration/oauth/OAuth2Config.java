@@ -70,7 +70,7 @@ public class OAuth2Config {
                 .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
                 .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
                 .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
-                .redirectUri("http://127.0.0.1:9090/login/oauth2/movietv")
+                .redirectUri("http://localhost:4200/callback")
                 .postLogoutRedirectUri("http://localhost:9090/")
                 .tokenSettings(TokenSettings.builder()
                         .reuseRefreshTokens(false)

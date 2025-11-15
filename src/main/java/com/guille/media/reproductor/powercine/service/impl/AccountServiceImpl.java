@@ -2,12 +2,15 @@ package com.guille.media.reproductor.powercine.service.impl;
 
 import java.util.Optional;
 
+import com.guille.media.reproductor.powercine.exceptions.AccountAlreadyExistsException;
 import com.guille.media.reproductor.powercine.models.AccountJpaEntity;
 import com.guille.media.reproductor.powercine.repository.Accountrepository;
 import com.guille.media.reproductor.powercine.service.interfaces.IAccountService;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+@Slf4j
 @Service
 public class AccountServiceImpl implements IAccountService {
 
@@ -34,7 +37,13 @@ public class AccountServiceImpl implements IAccountService {
 
     @Override
     public AccountJpaEntity save(AccountJpaEntity accountJpaEntity) {
-        return this.accountrepository.save(accountJpaEntity);
+        try {
+            return this.accountrepository.save(accountJpaEntity);
+        } catch (Exception ex) {
+            log.info("Save account failed");
+            throw new AccountAlreadyExistsException("Account " + accountJpaEntity.getUsername() + " already exists");
+        }
+
     }
 
 }

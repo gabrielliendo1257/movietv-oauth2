@@ -1,59 +1,56 @@
 package com.guille.media.reproductor.powercine.restcontroller;
 
 import java.util.List;
+import java.util.Map;
 
-import com.guille.media.reproductor.powercine.dto.request.MediaDto;
+import com.guille.media.reproductor.powercine.dto.request.AuthCode;
+import com.guille.media.reproductor.powercine.dto.request.FileUploadDto;
 import com.guille.media.reproductor.powercine.mapper.MediaMapper;
+import com.guille.media.reproductor.powercine.models.JwtAccessToken;
 import com.guille.media.reproductor.powercine.models.MediaJpaEntity;
+import com.guille.media.reproductor.powercine.models.MediaJpaSignature;
 import com.guille.media.reproductor.powercine.service.interfaces.IMediaService;
 
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.annotation.Secured;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import com.guille.media.reproductor.powercine.service.interfaces.OAuthService;
+import org.springframework.http.*;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.*;
 
 import lombok.extern.slf4j.Slf4j;
 
+
 @Slf4j
+@CrossOrigin(value = "http://localhost:4200", methods = {RequestMethod.GET, RequestMethod.POST})
 @RestController
 @RequestMapping(value = "${api.path.base}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
 public class MovieController {
 
-  private final IMediaService mediaService;
-  private final MediaMapper mediaMapper;
+    private final IMediaService mediaService;
+    private final MediaMapper mediaMapper;
 
-  public MovieController(IMediaService mediaService, MediaMapper mediaMapper) {
-    this.mediaService = mediaService;
-    this.mediaMapper = mediaMapper;
-  }
+    private static final String MINIO_DEFAULT_BUCKET = "default";
 
-  @GetMapping(value = "/hello")
-  public ResponseEntity<?> hello() {
-    return new ResponseEntity<String>("Hello STANDARD_CONTENT.", HttpStatus.OK);
-  }
+    public MovieController(IMediaService mediaService, MediaMapper mediaMapper) {
+        this.mediaService = mediaService;
+        this.mediaMapper = mediaMapper;
+    }
 
-  @Secured("ROLE_ADMIN")
-  @GetMapping(value = "/content")
-  public ResponseEntity<?> content() {
-    return new ResponseEntity<String>("Hello admin.", HttpStatus.OK);
-  }
+    @GetMapping(value = "/all")
+    public ResponseEntity<?> getAllMovies() {
+        List<MediaJpaEntity> medias = this.mediaService.findAllMedias();
+        return medias.isEmpty() ? ResponseEntity.noContent().build() : ResponseEntity.ok(medias);
+    }
 
-  @GetMapping(value = "/all")
-  public ResponseEntity<?> getAllMovies() {
-    List<MediaJpaEntity> medias = this.mediaService.findAllMedias();
-    return medias.isEmpty() ? ResponseEntity.noContent().build() : ResponseEntity.ok(medias);
-  }
+    @PostMapping(value = "/upload-session")
+    public ResponseEntity<?> uploadSession(@RequestParam(required = false) Boolean complete, @RequestBody FileUploadDto upload) {
+        if (complete != null && complete) {
+            log.info("Session upload complete");
+        }
 
-  @PostMapping(value = "/save")
-  public ResponseEntity<?> processPersitMovie(@RequestBody MediaDto mediaDto) {
-    MediaJpaEntity entity = this.mediaMapper.toEntity(mediaDto);
+        MediaJpaSignature mediaJpaSignature = this.mediaService.getPresignedUrl(MINIO_DEFAULT_BUCKET, upload.filename());
+        log.info("Entity media signature: {}", mediaJpaSignature);
 
-    return ResponseEntity.ok(this.mediaService.save(entity));
-  }
+        return ResponseEntity.ok(this.mediaMapper.toSignatureDto(mediaJpaSignature));
+    }
 
 }

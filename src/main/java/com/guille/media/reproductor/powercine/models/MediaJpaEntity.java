@@ -35,12 +35,15 @@ public class MediaJpaEntity extends BaseJpaEntity {
     private String title;
     private String description;
 
-    @Column(name = "image")
-    private String uriImage;
+    @Column(name = "thumbnail")
+    private String thumbnail;
+
+    @Column(name = "id_file")
+    private String idFile;
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, title, uriImage);
+        return Objects.hash(id, title, thumbnail);
     }
 
     @Override
@@ -56,7 +59,7 @@ public class MediaJpaEntity extends BaseJpaEntity {
         }
         MediaJpaEntity other = (MediaJpaEntity) obj;
         return Objects.equals(id, other.id) && Objects.equals(title, other.title)
-                && Objects.equals(uriImage, other.uriImage);
+                && Objects.equals(thumbnail, other.thumbnail);
     }
 
 }
