@@ -13,6 +13,9 @@ import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
 
+import jakarta.servlet.http.Cookie;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
@@ -23,6 +26,11 @@ import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.client.registration.ClientRegistration;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
+import org.springframework.security.oauth2.client.registration.InMemoryClientRegistrationRepository;
+import org.springframework.security.oauth2.client.web.HttpSessionOAuth2AuthorizedClientRepository;
+import org.springframework.security.oauth2.client.web.OAuth2AuthorizedClientRepository;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.core.oidc.OidcScopes;
@@ -34,12 +42,17 @@ import org.springframework.security.oauth2.server.authorization.config.annotatio
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2AuthorizationServerConfigurer;
 import org.springframework.security.oauth2.server.authorization.settings.ClientSettings;
 import org.springframework.security.oauth2.server.authorization.settings.TokenSettings;
+import org.springframework.security.oauth2.server.resource.web.BearerTokenResolver;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher;
 
+@Slf4j
 @Configuration
 public class OAuth2Config {
+
+    @Value("${powercine.env.oauth2.redirect}")
+    private String oauth2Redirect;
 
     @Bean
     @Order(value = Ordered.HIGHEST_PRECEDENCE)
@@ -60,7 +73,7 @@ public class OAuth2Config {
     }
 
     @Bean
-    @Profile(value = "dev")
+    @Profile(value = {"dev", "test"})
     RegisteredClientRepository registeredClientRepository(PasswordEncoder passwordEncoder) {
         var registeredClient = RegisteredClient.withId(UUID.randomUUID().toString())
                 .clientId("app-movie")
@@ -70,7 +83,7 @@ public class OAuth2Config {
                 .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
                 .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
                 .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
-                .redirectUri("http://localhost:4200/callback")
+                .redirectUri(this.oauth2Redirect)
                 .postLogoutRedirectUri("http://localhost:9090/")
                 .tokenSettings(TokenSettings.builder()
                         .reuseRefreshTokens(false)
@@ -81,6 +94,50 @@ public class OAuth2Config {
                 .build();
 
         return new InMemoryRegisteredClientRepository(registeredClient);
+    }
+
+    @Bean
+    public ClientRegistrationRepository clientRegistrationRepository() {
+        return new InMemoryClientRegistrationRepository(clientRegistration());
+    }
+
+    @Bean
+    BearerTokenResolver bearerTokenResolver() {
+        log.info("Bearer token resolver");
+        return request -> {
+            Cookie[] cookies = request.getCookies();
+            if (cookies == null) return null;
+
+            for (Cookie c : cookies) {
+                if ("access_token".equals(c.getName())) {
+                    log.info("Access token: {}", c.getValue());
+                    return c.getValue();
+                }
+            }
+            return null;
+        };
+    }
+
+    private ClientRegistration clientRegistration() {
+        return ClientRegistration.withRegistrationId("myapp")
+                .clientId("app-movie")
+                .clientSecret("super-secret")
+                .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
+                .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
+                .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
+                .redirectUri("http://localhost:4200/callback")
+                .scope(OidcScopes.PROFILE)
+                .scope(OidcScopes.OPENID)
+                .authorizationUri("http://localhost:8080/oauth2/authorize")
+                .tokenUri("http://localhost:8080/oauth2/token")
+                .issuerUri("http://localhost:8080")
+                .jwkSetUri("http://localhost:8080/oauth2/jwks")
+                .build();
+    }
+
+    @Bean
+    public OAuth2AuthorizedClientRepository authorizedClientRepository() {
+        return new HttpSessionOAuth2AuthorizedClientRepository();
     }
 
     @Bean

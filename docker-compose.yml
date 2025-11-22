@@ -1,0 +1,52 @@
+services:
+
+  minio:
+    image: quay.io/minio/minio
+    container_name: minio
+    command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      CURRENT_HOST: "192.168.1.103"
+      MINIO_ROOT_USER: "adminusername"
+      MINIO_ROOT_PASSWORD: "adminpassword"
+      MINIO_SERVER_URL: "http://192.168.1.103:9000"
+      MINIO_BROWSER_REDIRECT_URL: "http://192.168.1.103:9001"
+
+  redis:
+    image: redis:7.2
+    container_name: redis
+    restart: always
+    ports:
+      - "6379:6379"
+    command: [ "redis-server", "--appendonly", "yes" ]
+    volumes:
+      - redis_data:/data
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: app_powercine
+    restart: always
+    ports:
+      - "8080:8080"
+    environment:
+      # Variables de entorno de tu app
+      SPRING_PROFILES_ACTIVE: "test"
+      SPRING_DATASOURCE_URL: "jdbc:h2:mem:movienationdb;DB_CLOSE_ON_EXIT=FALSE"
+      SPRING_DATASOURCE_USERNAME: "piter"
+      SPRING_DATASOURCE_PASSWORD: "piter"
+      MINIO_ENDPOINT: "http://192.168.1.103:9000"
+      MINIO_ACCESS_KEY: "adminusername"
+      MINIO_SECRET_KEY: "adminpassword"
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      FRONTEND_ENDPOINT: "http://192.168.1.103:4200"
+    depends_on:
+      - redis
+      - minio
+
+volumes:
+  redis_data:

@@ -1,7 +1,8 @@
 package com.guille.media.reproductor.powercine.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.guille.media.reproductor.powercine.models.listeners.SignatureListener;
-import com.guille.media.reproductor.powercine.utils.enums.StatusMedia;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -25,24 +26,28 @@ public class MediaJpaSignature {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @Column(nullable = false)
-    @Enumerated(EnumType.STRING)
-    private StatusMedia status;
-
-    @Column(nullable = false, updatable = false)
-    private String uploadFor;
-
     @Column(nullable = false, updatable = false)
     private LocalDate uploadAt;
 
     private LocalDate updatedAt;
 
+    @JsonProperty(value = "object_key")
+    private String objectKey;
+
+    @ManyToOne
+    @JsonIgnore
+    private MediaJpaEntity media;
+
     @Transient
     private String presignedUrl;
 
-    public MediaJpaSignature(String uploadFor, String urlSignature) {
-        this.uploadFor = uploadFor;
-        this.presignedUrl = urlSignature;
+    public MediaJpaSignature(String objectKey) {
+        this.objectKey = objectKey;
+    }
+
+    public MediaJpaSignature(String objectKey, String presignedUrl) {
+        this.objectKey = objectKey;
+        this.presignedUrl = presignedUrl;
     }
 
     @Override

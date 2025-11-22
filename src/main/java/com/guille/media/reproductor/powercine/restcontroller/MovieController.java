@@ -3,36 +3,34 @@ package com.guille.media.reproductor.powercine.restcontroller;
 import java.util.List;
 import java.util.Map;
 
-import com.guille.media.reproductor.powercine.dto.request.AuthCode;
+import com.guille.media.reproductor.powercine.dto.request.CreateMediaRequest;
 import com.guille.media.reproductor.powercine.dto.request.FileUploadDto;
-import com.guille.media.reproductor.powercine.mapper.MediaMapper;
-import com.guille.media.reproductor.powercine.models.JwtAccessToken;
+import com.guille.media.reproductor.powercine.dto.response.MediaSignatureDto;
 import com.guille.media.reproductor.powercine.models.MediaJpaEntity;
-import com.guille.media.reproductor.powercine.models.MediaJpaSignature;
+import com.guille.media.reproductor.powercine.pipes.FilenameConvert;
 import com.guille.media.reproductor.powercine.service.interfaces.IMediaService;
 
-import com.guille.media.reproductor.powercine.service.interfaces.OAuthService;
+import io.minio.http.Method;
 import org.springframework.http.*;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import lombok.extern.slf4j.Slf4j;
 
 
 @Slf4j
-@CrossOrigin(value = "http://localhost:4200", methods = {RequestMethod.GET, RequestMethod.POST})
+@CrossOrigin(value = "${powercine.env.frontendapp.endpoint}", methods = {RequestMethod.GET, RequestMethod.POST})
 @RestController
 @RequestMapping(value = "${api.path.base}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
 public class MovieController {
 
     private final IMediaService mediaService;
-    private final MediaMapper mediaMapper;
+    private final FilenameConvert filenameConvert;
 
     private static final String MINIO_DEFAULT_BUCKET = "default";
 
-    public MovieController(IMediaService mediaService, MediaMapper mediaMapper) {
+    public MovieController(IMediaService mediaService, FilenameConvert filenameConvert) {
         this.mediaService = mediaService;
-        this.mediaMapper = mediaMapper;
+        this.filenameConvert = filenameConvert;
     }
 
     @GetMapping(value = "/all")
@@ -41,16 +39,45 @@ public class MovieController {
         return medias.isEmpty() ? ResponseEntity.noContent().build() : ResponseEntity.ok(medias);
     }
 
-    @PostMapping(value = "/upload-session")
-    public ResponseEntity<?> uploadSession(@RequestParam(required = false) Boolean complete, @RequestBody FileUploadDto upload) {
-        if (complete != null && complete) {
-            log.info("Session upload complete");
+    @PostMapping(value = "/save")
+    public ResponseEntity<?> saveMedia(@RequestBody CreateMediaRequest createMediaRequest) {
+        try {
+            log.info("Request controller: {}",  createMediaRequest);
+            this.mediaService.createMedia(createMediaRequest);
+        } catch (Exception e) {
+            log.error(e.getMessage());
+            return ResponseEntity.badRequest().build();
         }
 
-        MediaJpaSignature mediaJpaSignature = this.mediaService.getPresignedUrl(MINIO_DEFAULT_BUCKET, upload.filename());
-        log.info("Entity media signature: {}", mediaJpaSignature);
-
-        return ResponseEntity.ok(this.mediaMapper.toSignatureDto(mediaJpaSignature));
+        return ResponseEntity.ok().build();
     }
 
+    @PostMapping(value = "/upload-session")
+    public ResponseEntity<?> uploadSession(@RequestParam(required = false) Boolean complete, @RequestBody FileUploadDto upload) {
+        if (upload.filename().isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Filename is empty."));
+        }
+
+        if (complete != null && complete) {
+            log.info("Session upload complete");
+            return ResponseEntity.ok(Map.of("message", "Session upload complete"));
+        }
+
+        String newFilename = this.filenameConvert.convert(upload.filename());
+        String urlSignature = this.mediaService.getPresignedUrl(MINIO_DEFAULT_BUCKET, newFilename, Method.PUT, 5);
+
+        return ResponseEntity.ok(new MediaSignatureDto(urlSignature, newFilename));
+    }
+
+    @PostMapping(value = "/streaming-session")
+    public ResponseEntity<?> presignedMediaStreaming(@RequestBody FileUploadDto upload) {
+        log.info("Request controller: {}",  upload);
+        if (upload.filename().isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Filename is empty."));
+        }
+
+        String urlPresigned = this.mediaService.getPresignedUrl(MINIO_DEFAULT_BUCKET, upload.filename(), Method.GET, 15);
+
+        return ResponseEntity.ok(new MediaSignatureDto(urlPresigned, upload.filename()));
+    }
 }

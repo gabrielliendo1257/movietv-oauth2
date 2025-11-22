@@ -6,7 +6,6 @@ import com.guille.media.reproductor.powercine.mapper.AccountMapper;
 import com.guille.media.reproductor.powercine.models.AccountJpaEntity;
 import com.guille.media.reproductor.powercine.models.SecurityAccount;
 import com.guille.media.reproductor.powercine.repository.Accountrepository;
-import com.guille.media.reproductor.powercine.restcontroller.filters.JwtCookieFilter;
 import com.guille.media.reproductor.powercine.utils.enums.Roles;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -23,9 +22,7 @@ import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configurers.CorsConfigurer;
 import org.springframework.security.config.annotation.web.configurers.CsrfConfigurer;
-import org.springframework.security.config.annotation.web.configurers.HttpBasicConfigurer;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -36,12 +33,10 @@ import org.springframework.security.oauth2.server.authorization.token.JwtEncodin
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenCustomizer;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
-import org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -53,6 +48,9 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @EnableMethodSecurity(prePostEnabled = true, securedEnabled = true)
 public class SecurityConfig {
 
+    @Value("${powercine.env.frontendapp.endpint}")
+    private String frontendAddress;
+
     @Bean
     RestTemplate restTemplate() {
         return new RestTemplate();
@@ -63,7 +61,7 @@ public class SecurityConfig {
 
     @Bean
     @Order(value = 2)
-    SecurityFilterChain configuration(HttpSecurity http, JwtCookieFilter jwtCookieFilter)
+    SecurityFilterChain configuration(HttpSecurity http)
             throws Exception {
         return http
                 .cors(corsConfig -> corsConfig.configurationSource(this.corsConfigurationSource()))
@@ -71,13 +69,18 @@ public class SecurityConfig {
                 .oauth2ResourceServer((resourceServer) -> resourceServer
                         .jwt(jwtConfig -> jwtConfig
                                 .jwkSetUri("http://localhost:8080/oauth2/jwks")))
-                .addFilterBefore(jwtCookieFilter, UsernamePasswordAuthenticationFilter.class)
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(HttpMethod.GET, this.apiPathBase + "/hello").permitAll()
                         .requestMatchers(HttpMethod.GET, this.apiPathBase + "/all").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/.well-known/**").permitAll()
+
                         .requestMatchers(HttpMethod.POST, this.apiPathBase + "/auth/exchange").permitAll()
                         .requestMatchers(HttpMethod.GET, this.apiPathBase + "/auth/me").permitAll()
+                        .requestMatchers(HttpMethod.GET, this.apiPathBase + "/auth/admin").permitAll()
+
+                        .requestMatchers(HttpMethod.POST, this.apiPathBase + "/upload-session").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, this.apiPathBase + "/streaming-session").permitAll()
+
+                        .requestMatchers(HttpMethod.GET, "/.well-known/**").permitAll()
                         .anyRequest().authenticated())
                 .formLogin(Customizer.withDefaults())
                 .build();
@@ -87,7 +90,7 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
 
-        config.setAllowedOrigins(List.of("http://localhost:4200"));
+        config.setAllowedOrigins(List.of("http://localhost:4200", this.frontendAddress));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("Authorization", "Content-Type"));
         config.setAllowCredentials(true);
@@ -112,9 +115,9 @@ public class SecurityConfig {
     OAuth2TokenCustomizer<JwtEncodingContext> tokenCustomizer(
             @Value(value = "${spring.application.name}") String applicationName) {
         return (context) -> {
-            var authenticatio = context.getPrincipal();
+            var authentication = context.getPrincipal();
 
-            if (authenticatio instanceof UsernamePasswordAuthenticationToken authenticationToken) {
+            if (authentication instanceof UsernamePasswordAuthenticationToken authenticationToken) {
                 if (context.getTokenType() == OAuth2TokenType.ACCESS_TOKEN) {
                     List<String> roles = authenticationToken.getAuthorities().stream()
                             .map(GrantedAuthority::getAuthority)
@@ -154,7 +157,7 @@ public class SecurityConfig {
     }
 
     @Bean
-    @Profile(value = {"test"})
+    @Profile(value = {"init"})
     UserDetailsService userDetailServiceDev(PasswordEncoder passwordEncoder) {
         SecurityAccount securityAccount = new SecurityAccount("adminusername", passwordEncoder.encode("adminpassword"),
                 Roles.ADMIN);

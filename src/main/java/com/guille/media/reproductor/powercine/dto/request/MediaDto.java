@@ -1,8 +1,7 @@
 package com.guille.media.reproductor.powercine.dto.request;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import jakarta.validation.constraints.Size;
 
-public record MediaDto(String title, String description, @Size(max = 200) String thumbnail,
-                       @Size(max = 100) @JsonProperty(value = "id_file") String idFile) {
+public record MediaDto(Integer id, String title, String overview, @JsonProperty(value = "poster_path") String posterPath,
+                       @JsonProperty(value = "release_date") String releaseDate, Double popularity) {
 }

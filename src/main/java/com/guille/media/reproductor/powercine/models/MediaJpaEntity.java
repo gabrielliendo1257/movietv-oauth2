@@ -1,16 +1,11 @@
 package com.guille.media.reproductor.powercine.models;
 
+import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EntityListeners;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-
-import com.guille.media.reproductor.powercine.models.listeners.BaseJpaEntity;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.persistence.*;
 
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
@@ -26,24 +21,45 @@ import lombok.NoArgsConstructor;
 @EntityListeners(value = AuditingEntityListener.class)
 @NoArgsConstructor
 @AllArgsConstructor
-public class MediaJpaEntity extends BaseJpaEntity {
+public class MediaJpaEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
     private String title;
-    private String description;
 
-    @Column(name = "thumbnail")
-    private String thumbnail;
+    @Column(columnDefinition = "TEXT")
+    private String overview;
+    private Double popularity;
 
-    @Column(name = "id_file")
-    private String idFile;
+    @JsonProperty(value = "poster_path")
+    private String posterPath;
+
+    @JsonProperty(value = "release_date")
+    private String releaseDate;
+
+    @JsonProperty(value = "vote_average")
+    private Double voteAverage;
+
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "media_id")
+    @Builder.Default
+    @JsonProperty(value = "s3_data")
+    private Set<MediaJpaSignature> s3Data = new HashSet<>();
+
+    public void addMediaSignature(MediaJpaSignature signature) {
+        this.s3Data.add(signature);
+        signature.setMedia(this);
+    }
+
+    public void removeMediaSignature(MediaJpaSignature signature) {
+        this.s3Data.remove(signature);
+        signature.setMedia(null);
+    }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, title, thumbnail);
+        return Objects.hash(id, title, posterPath);
     }
 
     @Override
@@ -59,7 +75,7 @@ public class MediaJpaEntity extends BaseJpaEntity {
         }
         MediaJpaEntity other = (MediaJpaEntity) obj;
         return Objects.equals(id, other.id) && Objects.equals(title, other.title)
-                && Objects.equals(thumbnail, other.thumbnail);
+                && Objects.equals(posterPath, other.posterPath);
     }
 
 }

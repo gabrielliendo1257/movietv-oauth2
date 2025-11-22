@@ -28,14 +28,14 @@ public class S3ServiceImpl implements S3Service {
     }
 
     @Override
-    public String getSignatureUrl(String bucket, String filename) {
+    public String getSignatureUrl(String bucket, String filename, Method method, Integer expire) {
         try {
             String presignedUrl = this.minioClient.getPresignedObjectUrl(
                     GetPresignedObjectUrlArgs.builder()
-                            .method(Method.PUT)
+                            .method(method)
                             .bucket(bucket)
                             .object(filename)
-                            .expiry(1, TimeUnit.MINUTES)
+                            .expiry(expire, TimeUnit.MINUTES)
                             .build()
             );
 
