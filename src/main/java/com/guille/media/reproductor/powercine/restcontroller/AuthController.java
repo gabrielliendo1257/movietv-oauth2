@@ -35,11 +35,11 @@ public class AuthController {
 
         ResponseCookie cookie = ResponseCookie.from("access_token", jwtAccessToken.getAccessToken())
                 .httpOnly(true)
-                .secure(true)
+                .secure(false)
                 .sameSite("strict")
                 .path("/")
                 .domain(this.currentHost)
-                .maxAge(jwtAccessToken.getExpiresIn())
+                .maxAge(0)
                 .build();
         log.info("Cookie: {}", cookie);
 

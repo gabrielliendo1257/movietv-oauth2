@@ -1,20 +1,17 @@
 package com.guille.media.reproductor.powercine.models;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.persistence.*;
+import lombok.*;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import jakarta.persistence.*;
-
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
-
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
-@Data
+@Getter
+@Setter
+@ToString
 @Table(name = "medias")
 @Entity
 @Builder
@@ -45,6 +42,7 @@ public class MediaJpaEntity {
     @JoinColumn(name = "media_id")
     @Builder.Default
     @JsonProperty(value = "s3_data")
+    @ToString.Exclude
     private Set<MediaJpaSignature> s3Data = new HashSet<>();
 
     public void addMediaSignature(MediaJpaSignature signature) {

@@ -48,7 +48,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @EnableMethodSecurity(prePostEnabled = true, securedEnabled = true)
 public class SecurityConfig {
 
-    @Value("${powercine.env.frontendapp.endpint}")
+    @Value("${powercine.env.frontendapp.endpoint}")
     private String frontendAddress;
 
     @Bean

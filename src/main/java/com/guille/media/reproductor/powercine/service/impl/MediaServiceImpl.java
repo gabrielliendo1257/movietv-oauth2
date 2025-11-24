@@ -63,7 +63,6 @@ public class MediaServiceImpl implements IMediaService {
         return this.mediaRepository.findAll();
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'PREMIUM_USER')")
     @Override
     public String getPresignedUrl(String bucket, String filename, Method method, Integer expire) {
         if (!this.s3Service.existBucket(bucket)) {

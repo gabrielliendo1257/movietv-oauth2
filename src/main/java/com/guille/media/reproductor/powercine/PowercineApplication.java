@@ -3,7 +3,6 @@ package com.guille.media.reproductor.powercine;
 import com.guille.media.reproductor.powercine.models.AccountJpaEntity;
 import com.guille.media.reproductor.powercine.repository.Accountrepository;
 import com.guille.media.reproductor.powercine.utils.enums.Roles;
-
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

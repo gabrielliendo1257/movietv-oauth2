@@ -1,30 +1,25 @@
 package com.guille.media.reproductor.powercine.models;
 
-import java.time.LocalDateTime;
-import java.util.Objects;
-
-import jakarta.persistence.*;
-
-import com.guille.media.reproductor.powercine.models.listeners.BaseJpaEntity;
 import com.guille.media.reproductor.powercine.utils.enums.Roles;
-
+import jakarta.persistence.*;
+import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import java.time.LocalDateTime;
+import java.util.Objects;
 
-@Data
+@Getter
+@Setter
+@ToString
 @Table(name = "accounts")
 @Entity
 @Builder
 @EntityListeners(value = AuditingEntityListener.class)
 @NoArgsConstructor
 @AllArgsConstructor
-public class AccountJpaEntity extends BaseJpaEntity {
+public class AccountJpaEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
