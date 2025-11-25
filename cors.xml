@@ -1,0 +1,12 @@
+<CORSConfiguration>
+    <CORSRule>
+        <AllowedOrigin>https://example.com</AllowedOrigin>
+        <AllowedOrigin>https://app.example.com</AllowedOrigin>
+        <AllowedMethod>GET</AllowedMethod>
+        <AllowedMethod>PUT</AllowedMethod>
+        <AllowedMethod>POST</AllowedMethod>
+        <AllowedMethod>DELETE</AllowedMethod>
+        <AllowedMethod>HEAD</AllowedMethod>
+        <AllowedHeader>*</AllowedHeader>
+    </CORSRule>
+</CORSConfiguration>

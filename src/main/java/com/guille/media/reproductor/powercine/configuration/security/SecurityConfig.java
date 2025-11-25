@@ -144,7 +144,7 @@ public class SecurityConfig {
     }
 
     @Bean
-    @Profile(value = {"test", "dev"})
+    @Profile(value = {"test", "dev", "prod"})
     UserDetailsService userDetailService(Accountrepository accountrepository, AccountMapper accountMapper) {
         return (username) -> {
             AccountJpaEntity accountEntity = accountrepository.findByUsername(username)
@@ -166,7 +166,7 @@ public class SecurityConfig {
     }
 
     @Bean
-    @Profile(value = {"test", "dev"})
+    @Profile(value = {"test", "dev", "prod"})
     PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }

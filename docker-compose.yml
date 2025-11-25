@@ -7,12 +7,38 @@ services:
     ports:
       - "9000:9000"
       - "9001:9001"
+    env_file:
+      - .env
     environment:
-      CURRENT_HOST: "192.168.1.103"
-      MINIO_ROOT_USER: "adminusername"
-      MINIO_ROOT_PASSWORD: "adminpassword"
-      MINIO_SERVER_URL: "http://192.168.1.103:9000"
-      MINIO_BROWSER_REDIRECT_URL: "http://192.168.1.103:9001"
+      MINIO_ROOT_PATH: ${MINIO_PATH}
+      MINIO_ROOT_USER: ${MINIO_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_PASS}
+      MINIO_SERVER_URL: ${MINIO_URL}
+      MINIO_BROWSER_REDIRECT_URL: ${MINIO_REDIRECT}
+    volumes:
+      - ${MINIO_PATH}:/data
+      - ./cors.xml:/etc/minio/cors.xml
+
+  mysql:
+    image: mysql:latest
+    container_name: mysql_db
+    restart: always
+    env_file:
+      - .env
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-u", "root", "-proot" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    ports:
+      - "3306:3306"
+    volumes:
+      - ${DB_PATH}:/var/lib/mysql
 
   redis:
     image: redis:7.2
@@ -21,32 +47,37 @@ services:
     ports:
       - "6379:6379"
     command: [ "redis-server", "--appendonly", "yes" ]
-    volumes:
-      - redis_data:/data
 
   app:
     build:
       context: .
       dockerfile: Dockerfile
     container_name: app_powercine
-    restart: always
+    restart: no
     ports:
       - "8080:8080"
+    env_file:
+      - .env
     environment:
       # Variables de entorno de tu app
-      SPRING_PROFILES_ACTIVE: "test"
-      SPRING_DATASOURCE_URL: "jdbc:h2:mem:movienationdb;DB_CLOSE_ON_EXIT=FALSE"
-      SPRING_DATASOURCE_USERNAME: "piter"
-      SPRING_DATASOURCE_PASSWORD: "piter"
-      MINIO_ENDPOINT: "http://192.168.1.103:9000"
-      MINIO_ACCESS_KEY: "adminusername"
-      MINIO_SECRET_KEY: "adminpassword"
+      SPRING_PROFILES_ACTIVE: "prod"
+      # DATABASE
+      SPRING_DATASOURCE_URL: "jdbc:mysql://mysql:3306/netfreedb"
+      SPRING_DATASOURCE_USERNAME: ${DB_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
+      # MINIO
+      MINIO_ENDPOINT: ${MINIO_URL}
+      MINIO_ACCESS_KEY: ${MINIO_USER}
+      MINIO_SECRET_KEY: ${MINIO_PASS}
+      # REDIS
       REDIS_HOST: redis
       REDIS_PORT: "6379"
-      FRONTEND_ENDPOINT: "http://192.168.1.103:4200"
+      FRONTEND_ENDPOINT: ${FRONTEND_URL}
     depends_on:
-      - redis
-      - minio
+      mysql:
+        condition: service_healthy
+
 
 volumes:
-  redis_data:
+  minio_data:
+  mysql_data:

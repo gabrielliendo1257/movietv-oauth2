@@ -73,7 +73,7 @@ public class OAuth2Config {
     }
 
     @Bean
-    @Profile(value = {"dev", "test"})
+    @Profile(value = {"dev", "test", "prod"})
     RegisteredClientRepository registeredClientRepository(PasswordEncoder passwordEncoder) {
         var registeredClient = RegisteredClient.withId(UUID.randomUUID().toString())
                 .clientId("app-movie")
