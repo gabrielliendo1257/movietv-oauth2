@@ -28,6 +28,11 @@ spring:
       host: ${REDIS_HOST}
       port: ${REDIS_PORT}
 
+  artemis:
+    user: ${ARTEMIS_USERNAME}
+    password: ${ARTEMIS_PASSWORD}
+    broker-url: ${ARTEMIS_BROKER_URL}
+
 
 logging:
   level:

@@ -77,6 +77,18 @@ services:
       mysql:
         condition: service_healthy
 
+  artemis_messaging:
+    image: apache/activemq-artemis:latest-alpine
+    container_name: artemis_messaging_dev
+    ports:
+      - ${ARTEMIS_WEB_PORT}:${ARTEMIS_WEB_PORT}
+      - ${ARTEMIS_BROKER_PORT}:${ARTEMIS_BROKER_PORT}
+    env_file:
+      - ../envs/.env
+    environment:
+      ARTEMIS_USER: ${ARTEMIS_USERNAME}
+      ARTEMIS_PASSWORD: ${ARTEMIS_PASSWORD}
+
 
 volumes:
   minio_data:
