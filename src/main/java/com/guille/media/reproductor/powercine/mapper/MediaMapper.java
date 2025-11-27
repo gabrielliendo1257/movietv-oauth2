@@ -13,6 +13,8 @@ public interface MediaMapper {
     // resquest
     MediaJpaEntity toEntity(MediaDto mediaDto);
 
+    MediaDto toDto(MediaJpaEntity mediaJpaEntity);
+
     //response
     MediaSignatureDto toSignatureDto(MediaJpaSignature mediaJpaSignature);
 }

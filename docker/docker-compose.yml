@@ -2,13 +2,13 @@ services:
 
   minio:
     image: quay.io/minio/minio
-    container_name: minio
+    container_name: minio_prod
     command: server /data --console-address ":9001"
     ports:
       - "9000:9000"
       - "9001:9001"
     env_file:
-      - .env
+      - ../envs/.env
     environment:
       MINIO_ROOT_PATH: ${MINIO_PATH}
       MINIO_ROOT_USER: ${MINIO_USER}
@@ -21,10 +21,10 @@ services:
 
   mysql:
     image: mysql:latest
-    container_name: mysql_db
+    container_name: mysql_db_prod
     restart: always
     env_file:
-      - .env
+      - ../envs/.env
     environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: ${DB_NAME}
@@ -36,13 +36,13 @@ services:
       timeout: 5s
       retries: 10
     ports:
-      - "3306:3306"
+      - "${DB_PORT}:3306"
     volumes:
       - ${DB_PATH}:/var/lib/mysql
 
   redis:
     image: redis:7.2
-    container_name: redis
+    container_name: redis_prod
     restart: always
     ports:
       - "6379:6379"
@@ -50,19 +50,19 @@ services:
 
   app:
     build:
-      context: .
+      context: ..
       dockerfile: Dockerfile
-    container_name: app_powercine
+    container_name: app_powercine_prod
     restart: no
     ports:
       - "8080:8080"
     env_file:
-      - .env
+      - ../envs/.env
     environment:
       # Variables de entorno de tu app
       SPRING_PROFILES_ACTIVE: "prod"
       # DATABASE
-      SPRING_DATASOURCE_URL: "jdbc:mysql://mysql:3306/netfreedb"
+      SPRING_DATASOURCE_URL: ${DB_URL}
       SPRING_DATASOURCE_USERNAME: ${DB_USERNAME}
       SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
       # MINIO

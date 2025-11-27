@@ -1,0 +1,63 @@
+services:
+
+  minio:
+    image: quay.io/minio/minio
+    container_name: minio_dev
+    command: server /data --console-address ":${MINIO_PORT_WEB}"
+    ports:
+      - ${MINIO_PORT_API}:${MINIO_PORT_API}
+      - ${MINIO_PORT_WEB}:${MINIO_PORT_WEB}
+    env_file:
+      - /home/backdev/codes/java/spring/practicas/movietv-oauth2/envs/.env-dev
+    environment:
+      MINIO_ROOT_PATH: ${MINIO_PATH}
+      MINIO_ROOT_USER: ${MINIO_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_PASS}
+      MINIO_SERVER_URL: ${MINIO_URL}
+      MINIO_BROWSER_REDIRECT_URL: ${MINIO_REDIRECT}
+    volumes:
+      - ${MINIO_PATH}:/data
+      - ./cors.xml:/etc/minio/cors.xml
+
+  mysql:
+    image: mysql:latest
+    container_name: mysql_db_dev
+    restart: always
+    env_file:
+      - /home/backdev/codes/java/spring/practicas/movietv-oauth2/envs/.env-dev
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-u", "root", "-proot" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    ports:
+      - ${DB_PORT}:${DB_PORT}
+    volumes:
+      - ${DB_PATH}:/var/lib/mysql
+
+  redis:
+    image: redis:7.2
+    container_name: redis_dev
+    restart: always
+    env_file:
+      - /home/backdev/codes/java/spring/practicas/movietv-oauth2/envs/.env-dev
+    ports:
+      - ${REDIS_PORT}:${REDIS_PORT}
+    command: [ "redis-server", "--appendonly", "yes" ]
+
+  artemis_messaging:
+    image: apache/activemq-artemis:latest-alpine
+    container_name: artemis_messaging_dev
+    ports:
+      - ${ARTEMIS_WEB_PORT}:${ARTEMIS_WEB_PORT}
+      - ${ARTEMIS_BROKER_PORT}:${ARTEMIS_BROKER_PORT}
+    env_file:
+      - /home/backdev/codes/java/spring/practicas/movietv-oauth2/envs/.env-dev
+    environment:
+      ARTEMIS_USER: ${ARTEMIS_USERNAME}
+      ARTEMIS_PASSWORD: ${ARTEMIS_PASSWORD}

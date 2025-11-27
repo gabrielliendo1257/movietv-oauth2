@@ -10,32 +10,35 @@ spring:
     name: powercine
 
   datasource:
-    url: "jdbc:h2:mem:movienationdb;DB_CLOSE_ON_EXIT=FALSE"
-    username: "piter"
-    password: "piter"
-    driver-class-name: org.h2.Driver
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
 
   jpa:
     show-sql: true
     hibernate:
       ddl-auto: create-drop
 
-  h2:
-    console:
-      enabled: true
+  artemis:
+    user: ${ARTEMIS_USERNAME}
+    password: ${ARTEMIS_PASSWORD}
+    broker-url: ${ARTEMIS_BROKER_URL}
 
-  #session:
-  #  redis:
-  #    flush-mode: on_save
-  #    namespace: spring:session
+  session:
+    redis:
+      flush-mode: on_save
+      namespace: spring:session
 
-  #cache:
-  #  type: redis
+  cache:
+    type: redis
 
-  #data:
-  #  redis:
-  #    host: localhost
-  #    port: 6379
+  data:
+    redis:
+      host: localhost
+      port: ${REDIS_PORT}
+
+    jdbc:
+      dialect: mysql
 
 
 logging:
@@ -45,3 +48,4 @@ logging:
     org.springframework.security: debug
     org.springframework.security.oauth2: debug
     org.springframework.data.redis: debug
+    jakarta.jms: debug

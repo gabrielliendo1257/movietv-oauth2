@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
@@ -18,7 +19,8 @@ import java.util.Set;
 @EntityListeners(value = AuditingEntityListener.class)
 @NoArgsConstructor
 @AllArgsConstructor
-public class MediaJpaEntity {
+public class MediaJpaEntity implements Serializable
+{
 
     @Id
     private Integer id;

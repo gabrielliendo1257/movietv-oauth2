@@ -75,6 +75,7 @@ public class OAuth2Config {
     @Bean
     @Profile(value = {"dev", "test", "prod"})
     RegisteredClientRepository registeredClientRepository(PasswordEncoder passwordEncoder) {
+        log.info("Oauth2 redirect: {}", this.oauth2Redirect);
         var registeredClient = RegisteredClient.withId(UUID.randomUUID().toString())
                 .clientId("app-movie")
                 .clientSecret(passwordEncoder.encode("super-secret"))
