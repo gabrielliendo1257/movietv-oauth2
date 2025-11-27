@@ -10,6 +10,7 @@ import com.guille.media.reproductor.powercine.models.MediaJpaEntity;
 import com.guille.media.reproductor.powercine.pipes.FilenameConvert;
 import com.guille.media.reproductor.powercine.service.interfaces.IMediaService;
 
+import com.guille.media.reproductor.powercine.service.interfaces.MessagingService;
 import io.minio.http.Method;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
@@ -49,7 +50,7 @@ public class MovieController {
             return ResponseEntity.badRequest().build();
         }
 
-        return ResponseEntity.ok().build();
+        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
     @PostMapping(value = "/upload-session")

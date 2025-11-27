@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Optional;
 
 import com.guille.media.reproductor.powercine.dto.request.CreateMediaRequest;
+import com.guille.media.reproductor.powercine.dto.request.MediaDto;
 import com.guille.media.reproductor.powercine.exceptions.BucketNotExistException;
 import com.guille.media.reproductor.powercine.mapper.MediaMapper;
 import com.guille.media.reproductor.powercine.models.MediaJpaEntity;
@@ -11,8 +12,10 @@ import com.guille.media.reproductor.powercine.models.MediaJpaSignature;
 import com.guille.media.reproductor.powercine.repository.MediaRepository;
 import com.guille.media.reproductor.powercine.service.interfaces.IMediaService;
 
+import com.guille.media.reproductor.powercine.service.interfaces.MessagingService;
 import com.guille.media.reproductor.powercine.service.interfaces.S3Service;
 import io.minio.http.Method;
+import jakarta.jms.Destination;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
@@ -25,11 +28,13 @@ public class MediaServiceImpl implements IMediaService {
     private final MediaRepository mediaRepository;
     private final S3Service s3Service;
     private final MediaMapper mediaMapper;
+    private final MessagingService messagingService;
 
-    public MediaServiceImpl(MediaRepository mediaRepository, S3Service s3Service, MediaMapper mediaMapper) {
+    public MediaServiceImpl(MediaRepository mediaRepository, S3Service s3Service, MediaMapper mediaMapper, MessagingService messagingService) {
         this.mediaRepository = mediaRepository;
         this.s3Service = s3Service;
         this.mediaMapper = mediaMapper;
+        this.messagingService = messagingService;
     }
 
     @Transactional(readOnly = true)
@@ -78,7 +83,12 @@ public class MediaServiceImpl implements IMediaService {
         mediaJpaEntity.addMediaSignature(new MediaJpaSignature(request.file().filename()));
         log.info("MediaJpaEntity: {}", mediaJpaEntity);
 
-        this.mediaRepository.save(mediaJpaEntity);
+        MediaJpaEntity mediaResult = this.mediaRepository.save(mediaJpaEntity);
+        log.info("Sending media to mediaRepository: {}", mediaResult);
+        MediaDto mediaDto = this.mediaMapper.toDto(mediaResult);
+        log.info("MediaDto: {}", mediaDto);
+
+        this.messagingService.sendMovie(mediaDto);
     }
 
 }

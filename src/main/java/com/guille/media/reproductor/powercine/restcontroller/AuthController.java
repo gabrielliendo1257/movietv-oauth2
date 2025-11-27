@@ -11,6 +11,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.Duration;
 import java.util.Map;
 
 @Slf4j
@@ -36,10 +37,10 @@ public class AuthController {
         ResponseCookie cookie = ResponseCookie.from("access_token", jwtAccessToken.getAccessToken())
                 .httpOnly(true)
                 .secure(false)
-                .sameSite("strict")
+                .sameSite("Strict")
                 .path("/")
                 .domain(this.currentHost)
-                .maxAge(0)
+                .maxAge(Duration.ofMinutes(7))
                 .build();
         log.info("Cookie: {}", cookie);
 

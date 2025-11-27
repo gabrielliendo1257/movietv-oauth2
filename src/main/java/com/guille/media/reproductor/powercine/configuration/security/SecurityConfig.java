@@ -1,13 +1,12 @@
 package com.guille.media.reproductor.powercine.configuration.security;
 
-import java.util.List;
-
 import com.guille.media.reproductor.powercine.mapper.AccountMapper;
 import com.guille.media.reproductor.powercine.models.AccountJpaEntity;
 import com.guille.media.reproductor.powercine.models.SecurityAccount;
 import com.guille.media.reproductor.powercine.repository.Accountrepository;
 import com.guille.media.reproductor.powercine.utils.enums.Roles;
-
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -35,12 +34,12 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
-
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.List;
 
 @Slf4j
 @Configuration
@@ -103,7 +102,8 @@ public class SecurityConfig {
 
     @Bean
     AuthenticationManager authenticationProvider(PasswordEncoder passwordEncoder,
-                                                 UserDetailsService userDetailsService) {
+                                                 @Qualifier("userDetailService") UserDetailsService userDetailsService)
+    {
         DaoAuthenticationProvider daoAuthenticationProvider = new DaoAuthenticationProvider();
         daoAuthenticationProvider.setPasswordEncoder(passwordEncoder);
         daoAuthenticationProvider.setUserDetailsService(userDetailsService);
