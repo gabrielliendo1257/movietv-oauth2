@@ -79,6 +79,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, this.apiPathBase + "/upload-session").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, this.apiPathBase + "/streaming-session").permitAll()
 
+                        .requestMatchers("/ws/**").permitAll()
+
                         .requestMatchers(HttpMethod.GET, "/.well-known/**").permitAll()
                         .anyRequest().authenticated())
                 .formLogin(Customizer.withDefaults())

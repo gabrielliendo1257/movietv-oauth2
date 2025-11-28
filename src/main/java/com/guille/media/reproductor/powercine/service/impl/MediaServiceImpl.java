@@ -84,7 +84,7 @@ public class MediaServiceImpl implements IMediaService {
         log.info("MediaJpaEntity: {}", mediaJpaEntity);
 
         MediaJpaEntity mediaResult = this.mediaRepository.save(mediaJpaEntity);
-        log.info("Sending media to mediaRepository: {}", mediaResult);
+        log.info("Sending media: {}", mediaResult);
         MediaDto mediaDto = this.mediaMapper.toDto(mediaResult);
         log.info("MediaDto: {}", mediaDto);
 

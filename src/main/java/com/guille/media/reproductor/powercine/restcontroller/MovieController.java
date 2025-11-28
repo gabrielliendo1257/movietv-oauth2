@@ -1,21 +1,24 @@
 package com.guille.media.reproductor.powercine.restcontroller;
 
-import java.util.List;
-import java.util.Map;
-
 import com.guille.media.reproductor.powercine.dto.request.CreateMediaRequest;
 import com.guille.media.reproductor.powercine.dto.request.FileUploadDto;
 import com.guille.media.reproductor.powercine.dto.response.MediaSignatureDto;
 import com.guille.media.reproductor.powercine.models.MediaJpaEntity;
 import com.guille.media.reproductor.powercine.pipes.FilenameConvert;
 import com.guille.media.reproductor.powercine.service.interfaces.IMediaService;
-
-import com.guille.media.reproductor.powercine.service.interfaces.MessagingService;
 import io.minio.http.Method;
-import org.springframework.http.*;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.messaging.handler.annotation.Payload;
+import org.springframework.messaging.handler.annotation.SendTo;
+import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 import org.springframework.web.bind.annotation.*;
 
-import lombok.extern.slf4j.Slf4j;
+import java.util.List;
+import java.util.Map;
 
 
 @Slf4j
@@ -80,5 +83,15 @@ public class MovieController {
         String urlPresigned = this.mediaService.getPresignedUrl(MINIO_DEFAULT_BUCKET, upload.filename(), Method.GET, 15);
 
         return ResponseEntity.ok(new MediaSignatureDto(urlPresigned, upload.filename()));
+    }
+
+    @MessageMapping("/up-file")
+    @SendTo("/topic/public")
+    public String getMedia(@Payload FileUploadDto file, SimpMessageHeaderAccessor headerAccessor)
+    {
+        log.info("Request websocket controller: {}",  file);
+        headerAccessor.getSessionAttributes().put("filename", file.filename());
+
+        return "File uploading: " + file.filename();
     }
 }
