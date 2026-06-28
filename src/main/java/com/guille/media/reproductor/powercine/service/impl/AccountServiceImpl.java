@@ -1,17 +1,18 @@
 package com.guille.media.reproductor.powercine.service.impl;
 
-import java.util.Optional;
-
-import com.guille.media.reproductor.powercine.exceptions.AccountAlreadyExistsException;
+import com.guille.media.reproductor.powercine.exceptions.customer.AccountAlreadyExistsException;
 import com.guille.media.reproductor.powercine.models.AccountJpaEntity;
 import com.guille.media.reproductor.powercine.repository.Accountrepository;
 import com.guille.media.reproductor.powercine.service.interfaces.IAccountService;
-
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+
+import java.util.Optional;
 
 @Slf4j
 @Service
+@Profile(value = {"test"})
 public class AccountServiceImpl implements IAccountService {
 
     private final Accountrepository accountrepository;

@@ -8,7 +8,6 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 @Slf4j
-@Component
 public class FilenameConvert implements Converter<String, String> {
 
     @Override

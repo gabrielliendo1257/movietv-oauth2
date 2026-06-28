@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.Optional;
 
 import com.guille.media.reproductor.powercine.dto.request.CreateMediaRequest;
+import com.guille.media.reproductor.powercine.dto.request.FileUploadDto;
+import com.guille.media.reproductor.powercine.dto.response.MediaSignatureDto;
 import com.guille.media.reproductor.powercine.models.MediaJpaEntity;
 import io.minio.http.Method;
 
@@ -20,6 +22,8 @@ public interface IMediaService {
     List<MediaJpaEntity> findAllMedias();
 
     String getPresignedUrl(String bucket, String filename, Method method, Integer expire);
+
+    MediaSignatureDto getMediaSignature(String bucket, FileUploadDto upload, Method method, Integer expire, Boolean fileConvert);
 
     void createMedia(CreateMediaRequest request);
 }

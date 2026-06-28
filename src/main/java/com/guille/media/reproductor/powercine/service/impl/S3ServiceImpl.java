@@ -1,24 +1,23 @@
 package com.guille.media.reproductor.powercine.service.impl;
 
 
-import com.guille.media.reproductor.powercine.exceptions.GetPresignedObjectException;
-import com.guille.media.reproductor.powercine.exceptions.MakeBucketException;
+import com.guille.media.reproductor.powercine.exceptions.s3.GetPresignedObjectException;
+import com.guille.media.reproductor.powercine.exceptions.s3.MakeBucketException;
 import com.guille.media.reproductor.powercine.service.interfaces.S3Service;
 import io.minio.BucketExistsArgs;
 import io.minio.GetPresignedObjectUrlArgs;
 import io.minio.MakeBucketArgs;
 import io.minio.MinioClient;
-import io.minio.errors.*;
 import io.minio.http.Method;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import java.util.Map;
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Service
+@Profile(value = {"test"})
 public class S3ServiceImpl implements S3Service {
 
     private final MinioClient minioClient;
@@ -39,12 +38,12 @@ public class S3ServiceImpl implements S3Service {
                             .build()
             );
 
-            log.info("Presigned url: {}", presignedUrl);
+            log.info("Presigned presignedUrl: {}", presignedUrl);
             return presignedUrl;
 
         } catch (Exception e) {
-            log.info("Error getting signature url: {}", e.getMessage());
-            throw new GetPresignedObjectException("Error getting signature url: " + e.getMessage());
+            log.info("Error getting signature presignedUrl: {}", e.getMessage());
+            throw new GetPresignedObjectException("Error getting signature presignedUrl: " + e.getMessage());
         }
     }
 

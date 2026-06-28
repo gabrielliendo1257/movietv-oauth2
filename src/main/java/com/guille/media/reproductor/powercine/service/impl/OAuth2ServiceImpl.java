@@ -1,9 +1,10 @@
 package com.guille.media.reproductor.powercine.service.impl;
 
-import com.guille.media.reproductor.powercine.models.JwtAccessToken;
+import com.guille.media.reproductor.powercine.dto.response.JwtAccessToken;
 import com.guille.media.reproductor.powercine.service.interfaces.OAuthService;
-import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -13,21 +14,27 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
+import lombok.extern.slf4j.Slf4j;
+
 @Slf4j
 @Service
-public class OAuth2ServiceImpl implements OAuthService {
+@Profile(value = {"test"})
+public class OAuth2ServiceImpl implements OAuthService
+{
 
     @Value("${powercine.env.oauth2.redirect}")
     private String oAuth2Redirect;
 
     private final RestTemplate restTemplate;
 
-    public OAuth2ServiceImpl(RestTemplate restTemplate) {
+    public OAuth2ServiceImpl(RestTemplate restTemplate)
+    {
         this.restTemplate = restTemplate;
     }
 
     @Override
-    public JwtAccessToken getAccessToken(String code) {
+    public JwtAccessToken getAccessToken(String code)
+    {
         log.info("Authentication exchange code: {}", code);
 
         HttpHeaders headers = new HttpHeaders();

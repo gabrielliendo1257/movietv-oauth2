@@ -1,21 +1,10 @@
 package com.guille.media.reproductor.powercine.configuration;
 
-import com.guille.media.reproductor.powercine.dto.request.MediaDto;
-import jakarta.jms.Destination;
-import org.apache.activemq.artemis.jms.client.ActiveMQQueue;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.jms.support.converter.MappingJackson2MessageConverter;
 
-import java.util.HashMap;
-import java.util.Map;
-
-
-@Configuration
+//@Configuration
 public class MessagingConf
 {
-    @Value("${powercine.env.messaging.queue}")
+    /*@Value("${powercine.env.messaging.queue}")
     private String messagingQueue;
 
     @Bean
@@ -35,5 +24,5 @@ public class MessagingConf
         messageConverter.setTypeIdMappings(typeIdMappings);
 
         return messageConverter;
-    }
+    }*/
 }
