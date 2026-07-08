@@ -1,8 +1,9 @@
 package com.guille.media.reproductor.powercine.storage.app.usecases;
 
 import java.time.Instant;
-import java.util.HashMap;
 import java.util.Map;
+
+import org.springframework.stereotype.Service;
 
 import com.guille.media.reproductor.powercine.storage.app.commands.requets.CreateUploadCommand;
 import com.guille.media.reproductor.powercine.storage.app.commands.requets.StreamingCommand;
@@ -28,20 +29,18 @@ import com.guille.media.reproductor.powercine.storage.domain.vos.StorageLocation
 import com.guille.media.reproductor.powercine.storage.domain.vos.StorageMetadata;
 import com.guille.media.reproductor.powercine.storage.domain.vos.UploadId;
 
-import org.springframework.stereotype.Service;
-
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
-public class DefaultStorageService implements StorageService {
+public class AppStorageService implements StorageService {
 
     private final ObjectStorageService objectStoragePort;
     private final StorageKeyGenerator storageKeyGenerator;
     private final UploadPolicy uploadPolicy;
     private final StorageRepository storageRepository;
 
-    public DefaultStorageService(
+    public AppStorageService(
             ObjectStorageService objectStorageService, StorageKeyGenerator storageKeyGenerator,
             UploadPolicy uploadPolicy, StorageRepository storageRepository) {
         this.objectStoragePort = objectStorageService;
@@ -51,47 +50,46 @@ public class DefaultStorageService implements StorageService {
     }
 
     @Override
-    public UploadSession createUploadSession(CreateUploadCommand command) {
-        BucketName bucket = BucketName.of("uploads");
-        log.info("Creating upload session for command {}", command);
-
-        Map<String, String> headers = new HashMap<>();
-        headers.put("Content-Type", command.mimeType().value());
-
-        StorageMetadata storageMetadata = new StorageMetadata(
-                command.mimeType().value(), command.size(), "test_checksum", Instant.now(),
-                Map.of("test_atribute", "subtitles"));
+    public UploadSession createUploadSession(CreateUploadCommand createUploadCommand) {
+        BucketName bucket = BucketName.of("uploads"); // TODO No hard codear el nombre
+        log.info("Starting upload session: {}", createUploadCommand);
 
         if (!this.objectStoragePort.bucketExists(bucket)) {
             throw new BucketNotFoundException("Bucket not found: " + bucket.bucketName());
         }
 
         StorageKey key = storageKeyGenerator.generate();
-        StorageLocation location = new StorageLocation(
-                bucket, key);
+        StorageLocation location = new StorageLocation(bucket, key);
         if (this.objectStoragePort.objectExists(location)) {
             throw new ObjectAlreadyExistsException(key);
         }
-
         UploadConfiguration uploadConfiguration = this.uploadPolicy.resolve(
-                command.size(), command.mimeType());
+                createUploadCommand.size(), createUploadCommand.mimeType());
         PresignedUploadRequest request = new PresignedUploadRequest(
-                uploadConfiguration.expiration(), headers);
+                uploadConfiguration.expiration(),
+                Map.of("Content-Type", createUploadCommand.mimeType().value()));
+
         PermissionUrl uploadUrl = this.objectStoragePort.createUploadUrl(
                 request, location);
 
+        StorageMetadata storageMetadata = new StorageMetadata(
+                createUploadCommand.mimeType().value(), createUploadCommand.size(), "test_checksum",
+                Instant.now(),
+                Map.of("test_atribute", "subtitles"));
         StorageObject storageObject = this.storageRepository.save(
                 new StorageObject(
-                        location, storageMetadata, UploadId.generate(), StorageStatus.PROCESSING));
+                        location, storageMetadata, UploadId.generate(),
+                        StorageStatus.PROCESSING));
 
-        log.info("Success upload session, returning.");
-        return new UploadSession(
+        UploadSession uploadSession = new UploadSession(
                 storageObject.getStorageId(),
                 uploadUrl.presignedUrl(),
                 key,
                 Instant.now().plus(uploadConfiguration.expiration()),
                 uploadUrl.headers(),
                 uploadUrl.method());
+        log.info("Success upload session, returning: {}", uploadSession);
+        return uploadSession;
     }
 
     @Override
