@@ -3,8 +3,6 @@ package com.guille.media.reproductor.powercine.storage.app.usecases;
 import java.time.Instant;
 import java.util.Map;
 
-import org.springframework.stereotype.Service;
-
 import com.guille.media.reproductor.powercine.storage.app.commands.requets.CreateUploadCommand;
 import com.guille.media.reproductor.powercine.storage.app.commands.requets.StreamingCommand;
 import com.guille.media.reproductor.powercine.storage.app.commands.response.StreamingSession;
@@ -29,6 +27,8 @@ import com.guille.media.reproductor.powercine.storage.domain.vos.StorageLocation
 import com.guille.media.reproductor.powercine.storage.domain.vos.StorageMetadata;
 import com.guille.media.reproductor.powercine.storage.domain.vos.UploadId;
 
+import org.springframework.stereotype.Service;
+
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -51,7 +51,7 @@ public class AppStorageService implements StorageService {
 
     @Override
     public UploadSession createUploadSession(CreateUploadCommand createUploadCommand) {
-        BucketName bucket = BucketName.of("uploads"); // TODO No hard codear el nombre
+        BucketName bucket = BucketName.of("users"); // TODO No hard codear el nombre
         log.info("Starting upload session: {}", createUploadCommand);
 
         if (!this.objectStoragePort.bucketExists(bucket)) {

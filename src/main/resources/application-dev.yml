@@ -17,7 +17,7 @@ spring:
   datasource:
     url: jdbc:h2:mem:testdb;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DATABASE_TO_LOWER=TRUE
     username: admin
-    password: admin123
+    password: admin
 
   h2:
     console:
@@ -44,7 +44,7 @@ security:
     refresh-token-expiration: 30d
 
 minio:
-  url: http://192.168.1.106:9000
+  url: ${MINIO_URL}
   access-key: admin
   secret-key: admin123
   bucket: uploads

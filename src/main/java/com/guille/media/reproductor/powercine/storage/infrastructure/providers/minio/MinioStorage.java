@@ -1,5 +1,7 @@
 package com.guille.media.reproductor.powercine.storage.infrastructure.providers.minio;
 
+import java.util.List;
+
 import com.guille.media.reproductor.powercine.storage.domain.exceptions.StorageException;
 import com.guille.media.reproductor.powercine.storage.domain.ports.ObjectStorageService;
 import com.guille.media.reproductor.powercine.storage.domain.vos.BucketName;
@@ -9,6 +11,9 @@ import com.guille.media.reproductor.powercine.storage.domain.vos.StorageKey;
 import com.guille.media.reproductor.powercine.storage.domain.vos.StorageLocation;
 import com.guille.media.reproductor.powercine.storage.domain.vos.StorageMetadata;
 import com.guille.media.reproductor.powercine.storage.domain.vos.StoredObjectSummary;
+
+import org.springframework.stereotype.Service;
+
 import io.minio.BucketExistsArgs;
 import io.minio.GetPresignedObjectUrlArgs;
 import io.minio.MakeBucketArgs;
@@ -17,9 +22,7 @@ import io.minio.StatObjectArgs;
 import io.minio.StatObjectResponse;
 import io.minio.errors.ErrorResponseException;
 import io.minio.http.Method;
-import java.util.List;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
 
 @Slf4j
 @Service
@@ -130,7 +133,7 @@ public class MinioStorage implements ObjectStorageService {
 			);
 			return true;
 		} catch (Exception e) {
-			log.error("Error con ex - {}", e.getCause().toString());
+			log.error("Error con ex - {}", e.toString());
 			return false;
 		}
 	}
